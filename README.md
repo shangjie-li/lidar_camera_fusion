@@ -267,9 +267,6 @@
 
 ## 3.测试联合标定效果
 ## 3.1.准备
-### usb_cam
-### image_proc
-### 激光雷达相关功能包
 ### lidar_camera_fusion_test功能包
  - 修改`lidar_camera_fusion_test/launch/lidar_camera_fusion_test.launch`
    ```Python
@@ -289,7 +286,6 @@
     - the_view_higher_limit/lower_limit指明期望的点云相对地面的限制高度，单位为米。
     - the_min_distance/max_distance指明期望的点云相对传感器的限制距离，单位为米。
     - jet_color与点云成像颜色有关。
-   ```
  - 编写`lidar_camera_fusion/conf/head_camera.yaml`
    ```Python
    %YAML:1.0
