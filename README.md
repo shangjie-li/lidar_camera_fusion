@@ -91,7 +91,7 @@
      cols: 4
      data: [799.3496704101562, 0, 337.8454315774161, 0, 0, 816.1021728515625, 200.2329448380315, 0, 0, 0, 1, 0]
    ```
-   参数含义如下：
+ - 参数含义如下：
    ```Python
    camera_matrix:
          [fx  0 cx]
@@ -125,6 +125,6 @@
  - http://wiki.ros.org/image_proc
  - https://github.com/dimatura/ros_vimdoc/blob/master/doc/ros-camera-info.txt
 		  
-    
+
 
 
