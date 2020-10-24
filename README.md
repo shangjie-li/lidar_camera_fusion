@@ -9,7 +9,9 @@
    cd catkin_ws/src
    git clone https://github.com/shangjie-li/lidar-camera-fusion-test.git
    cd ..
-   catkin_make
+   catkin_make -DCATKIN_WHITELIST_PACKAGES="aruco;aruco_ros;aruco_msgs"
+   catkin_make -DCATKIN_WHITELIST_PACKAGES="aruco_mapping;lidar_camera_calibration"
+   catkin_make -DCATKIN_WHITELIST_PACKAGES=""
    ```
 # 使用说明
 ## 1.相机内参矩阵标定
@@ -45,7 +47,6 @@
    ```
 ### 棋盘格标定板
  - http://wiki.ros.org/camera_calibration/Tutorials/MonocularCalibration?action=AttachFile&do=view&target=check-108.pdf
-
 ## 1.2.标定过程
  - 启动原始图像节点
    ```Shell
@@ -124,7 +125,144 @@
  - http://wiki.ros.org/camera_calibration
  - http://wiki.ros.org/image_proc
  - https://github.com/dimatura/ros_vimdoc/blob/master/doc/ros-camera-info.txt
-		  
+	  
+## 2.相机与激光雷达转换矩阵标定
+## 2.1.准备
+### 相机和激光雷达相关功能包
+ - 支持velodyne激光雷达和hesai激光雷达
+### aruco_ros功能包、aruco_mapping功能包、lidar_camera_calibration功能包
+ - 修改`lidar_camera_calibration/conf/config_file.txt`：
+   ```Python
+   640 480 #相机分辨率
+   -2.0 2.0 #点云范围限制，根据相机坐标系X方向筛选
+   -2.0 2.0 #点云范围限制，根据相机坐标系y方向筛选
+   0 3.0    #点云范围限制，根据相机坐标系z方向筛选
+   0.0004
+   2
+   0
+   799.349670 0.000000 337.845432 0.000000
+   0.000000 816.102173 200.232945 0.000000
+   0.000000 0.000000 1.000000 0.000000
+   100
+   1.57 -1.57 0
+   0 0 0
+   0
+   ```
+ - 修改`lidar_camera_calibration/conf/lidar_camera_calibration.yaml`：
+   ```Python
+   ﻿lidar_camera_calibration:
+     camera_frame_topic: /usb_cam/image_rect_color
+     camera_info_topic: /usb_cam/camera_info
+     velodyne_topic: /velodyne_points
+   ```
+ - 修改`lidar_camera_calibration/conf/marker_coordinates.txt`：
+   ```Python
+   2
+   50
+   50
+   4.9
+   4.9
+   25.2
+   50
+   50
+   4.9
+   4.9
+   25.2
+   ```
+ - 修改`aruco_mapping/launch/aruco_mapping.launch`：
+   ```Python
+   <remap from="/image_raw" to="/usb_cam/image_rect_color"/>	
+   <param name="calibration_file" type="string" value="$(find aruco_mapping)/data/head_camera.ini" />
+   <param name="num_of_markers" type="int" value="2" />
+   <param name="marker_size" type="double" value="0.252"/>
+   ```
+ - 编写`aruco_mapping/data/head_camera.ini`：
+   ```Python
+   [image]
+   width
+   640
+   height
+   480
+   [camera]
+   camera matrix
+   840.775356 0.000000 335.526789
+   0.000000 840.558918 202.496384
+   0.000000 0.000000 1.000000
+   distortion
+   -0.312987 0.065093 -0.000877 0.001404 0.000000
+   rectification
+   1 0 0
+   0 1 0
+   0 0 1
+   projection
+   799.349670 0.000000 337.845432 0.000000
+   0.000000 816.102173 200.232945 0.000000
+   0.000000 0.000000 1.000000 0.000000
+   ```
+### velodyne激光雷达和hesai激光雷达兼容问题
+ - 标定程序默认采用velodyne激光雷达，如果采用hesai激光雷达，则需做出特定修改。
+ - 修改`lidar_camera_calibration/conf/config_file.txt`：
+   ```Python
+   
+   ...
+   
+   1.57 -1.57 0
+   0 0 0
+   1
+   ```
+ - 修改`lidar_camera_calibration/conf/lidar_camera_calibration.yaml`：
+   ```Python
+   ﻿lidar_camera_calibration:
+     camera_frame_topic: /usb_cam/image_rect_color
+     camera_info_topic: /usb_cam/camera_info
+     velodyne_topic: /pandar_points
+   ```
+ - 修改`lidar_camera_calibration/include/lidar_camera_calibration/PreprocessUtils.h`：
+   ```C++
+   pcl::PointCloud<myPointXYZRID> intensityByRangeDiff(pcl::PointCloud<myPointXYZRID> point_cloud, config_settings config){
+      std::vector<std::vector<myPointXYZRID*>> rings(40); // 激光雷达线程数
+   ```
+ - 修改后需重新编译。
+### 二维码标定板
+ - https://chev.me/arucogen/
+ - 放置标定板时，两个标定板间距约0.5m，标定板与传感器高度相近且间距约2.5m。
+## 2.2.标定过程
+ - 启动原始图像节点
+   ```Shell
+   roslaunch usb_cam usb_cam-test.launch
+   ```
+ - 启动矫正图像节点
+   ```Shell
+   ROS_NAMESPACE=usb_cam rosrun image_proc image_proc
+   ```
+ - 启动激光雷达节点（根据所使用的激光雷达）
+   ```Shell
+   roslaunch velodyne_pointcloud VLP16_points.launch
+   ```
+   ```Shell
+   roslaunch velodyne_pointcloud VLP16_points.launch
+   ```
+ - 启动aruco_mapping
+   ```Shell
+   roslaunch aruco_mapping aruco_mapping.launch
+   ```
+    - 自动弹出mono8窗口，显示对标定板中二维码的检测情况，并将信息输出至终端。
+ - 启动lidar_camera_calibration
+   ```Shell
+   roslaunch lidar_camera_calibration find_transform.launch
+   ```
+    - 自动弹出cloud窗口和polygon窗口，此时需要在cloud窗口中点击绘制标定板各边的包络四边形。
+    - 每次点击需要按键确认，包络四边形会在polygon窗口中显示。
+    - 当绘制好所有包络四边形后，程序将自动计算Average translation、Average rotation、Final rotation。
+    - 计算结果将输出至终端，此时需要记录Average translation和Final rotation。
+## 2.3.参考
+ - https://github.com/ankitdhall/lidar_camera_calibration
+ - http://wiki.ros.org/aruco_mapping
+
+
+
+
+
 
 
 
