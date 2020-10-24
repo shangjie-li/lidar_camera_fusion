@@ -1,6 +1,6 @@
 # lidar-camera-fusion-test
 
-注：这是一个用于相机与激光雷达联合标定的ROS功能包
+注：这是一个用于相机与激光雷达联合标定的ROS功能包。
 
 # 安装
  - 建立工作空间并拷贝这个库
@@ -13,8 +13,8 @@
    ```
 # 使用说明
 ## 1.相机内参矩阵标定
-### 1.1.准备
-#### usb_cam
+## 1.1.准备
+### usb_cam
  - 查看相机编号：
    ```Shell
    ls /dev/video*
@@ -35,24 +35,23 @@
    <param name="pixel_format" value="mjpeg" />
    ```
     - image_width和image_height可以自主设置，不同分辨率对应不同标定结果
-#### camera_calibration
+### camera_calibration
    ```Shell
    rosdep install camera_calibration
    ```
-#### image_proc
+### image_proc
    ```Shell
    rosdep install image_proc
    ```
-#### 棋盘格标定板
+### 棋盘格标定板
  - http://wiki.ros.org/camera_calibration/Tutorials/MonocularCalibration?action=AttachFile&do=view&target=check-108.pdf
 
-### 1.2.标定过程
+## 1.2.标定过程
  - 启动原始图像节点
    ```Shell
    roslaunch usb_cam usb_cam-test.launch
    ```
- - 原始图像话题：
-   `/usb_cam/image_raw`
+ - 原始图像话题：`/usb_cam/image_raw`
  - 启动标定程序
    ```Shell
    rosrun camera_calibration cameracalibrator.py --size 8x6 --square 0.06 image:=/usb_cam/image_raw camera:=/usb_cam
@@ -116,9 +115,8 @@
    ```Shell
    ROS_NAMESPACE=usb_cam rosrun image_proc image_proc
    ```
- - 矫正图像话题：
-   `/usb_cam/image_rect_color`
-### 1.3.参考
+ - 矫正图像话题：`/usb_cam/image_rect_color`
+## 1.3.参考
  - https://blog.csdn.net/qq_36804363/article/details/89269776
  - https://blog.csdn.net/qq_36804363/article/details/90134707
  - https://blog.csdn.net/qq_30460905/article/details/80390576
