@@ -16,6 +16,7 @@
 		<param name ="the_max_distance" value="100.0"/>
 
 		<param name ="jet_color" value="30"/>
+		
 
 	</node>
 </launch>
